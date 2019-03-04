@@ -9,17 +9,14 @@ public interface SocketImp {
 
     /**
      * 获取socket
-     * @return
      */
      AsynchronousSocketChannel getSocket();
     /**
      * 是否存活
-     * @return
      */
      boolean isAlive();
     /**
      * 获取通讯实现对象
-     * @return
      */
      FtcTcpActions getAction();
     /**
@@ -33,7 +30,6 @@ public interface SocketImp {
 
     /**
      * 获取会话
-     * @return
      */
     Session getSession();
 

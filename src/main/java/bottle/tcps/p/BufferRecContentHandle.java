@@ -2,57 +2,95 @@ package bottle.tcps.p;
 
 
 import java.io.UnsupportedEncodingException;
-
-import static bottle.tcps.p.SessionContentStore.RECEIVE_STREAM;
-import static bottle.tcps.p.SessionContentStore.RECEIVE_STRING;
+import java.nio.ByteBuffer;
 
 /**
  * Created by user on 2017/11/23.
+ * 对接收的数据内容 拼接-处理-分发
+ *
  */
-class SessionContentHandle extends Thread{
+class BufferRecContentHandle {
 
+    public static final int RECEIVE_NODE = 0;//不存储任何东西
+    public static final int RECEIVE_CHARSET = 1; //存储字符编码byte[]
+    public static final int RECEIVE_STRING = 2; //存储字符串内容byte[]
+    public static final int RECEIVE_STREAM = 3;//接受字节流
 
-    private final Session session;
+    private int protocol = RECEIVE_NODE;
+
+    public int getContent_type() {
+        return protocol;
+    }
+
+    public void setContent_type(int content_type) {
+        this.protocol = content_type;
+    }
+
+    private Session session;
+
     private String charset;
-    private volatile boolean isFlag = true;
-    public SessionContentHandle(Session session) {
+
+    public BufferRecContentHandle(Session session) {
         this.session = session;
-        this.start();
     }
 
-    @Override
-    public void run() {
-
-        while (isFlag){
-                byte[] bytes = session.getStore().takeBuffer();
-//                System.out.println("获取到数据: " +bytes);
-                if (bytes!=null){
-//                    System.out.println("获取到数据: " +bytes.length);
-                    handlerBuffer(bytes);
-                }
-        }
-    }
-
-
-
-
-    private void handlerBuffer(byte[] data) {
+    public void handlerBuffer(byte[] data) {
+        if (data == null || data.length == 0) return;
         //数据拼接
         byte[] bytes = dataMosaic(data);
         //数据处理
         dataHandle(bytes);
     }
 
+    //剩余数据
+    private ByteBuffer ramContentBuffer;//上次剩余数据
+
+    private byte[] getRamContent() {
+        if (ramContentBuffer!=null && ramContentBuffer.position()>0){
+            ramContentBuffer.flip();
+            byte[] bytes = new byte[ramContentBuffer.limit()];
+            ramContentBuffer.get(bytes);
+            ramContentBuffer.clear();
+            return bytes;
+        }else{
+            return null;
+        }
+    }
+
+    //待收集的数据体长度
+    private int dataBodyLength = -1;
+
+    private int toBeCollectedSize() {
+        return dataBodyLength;
+    }
+
+    //设置接收的数据内容长度
+    private void setCollectedSize(int dataBodyLength) {
+        this.dataBodyLength = dataBodyLength;
+    }
+
+    //存入剩余数据
+    private void storeRemainBytes(byte[] bytes,int offset,int length) {
+        if (ramContentBuffer==null) ramContentBuffer = DirectBufferUtils.createByteBuffer(DirectBufferUtils.BUFFER_BLOCK_SIZE);
+        if (length>ramContentBuffer.capacity()) throw new IllegalStateException("tcp read remain  buffer size is insufficient.the data length: "+ length);
+        ramContentBuffer.clear();
+        ramContentBuffer.put(bytes,offset,length);
+    }
+    //复位
+    private void reset() {
+        dataBodyLength = -1;
+        protocol = RECEIVE_NODE;
+    }
+
     /**
      * 数据拼接
-     * @return
      */
     private byte[] dataMosaic(byte[] data) {
-//        System.out.println("取出 : "+ buf);
+//        ("取出 : "+ buf);
         // 1 是否还有上一次剩余未处理的数据 , 有 - 拼接在此段数据前
-        byte[] oldBytes = session.getStore().getRamContent();//获取剩余数据,清空剩余数据
+        byte[] oldBytes = getRamContent();//获取剩余数据,清空剩余数据
         if (oldBytes!=null){
-//            System.out.println("拼接的数据 - 大小: "+ oldBuf.limit());
+//            ("拼接的数据 - 大小: "+ oldBuf.limit());
             byte[] streamData = new byte[data.length+oldBytes.length];
             //1.要拷贝复制的原始数据
             //2.原始数据的读取位置(从原始数据哪个位置开始拷贝)
@@ -70,10 +108,10 @@ class SessionContentHandle extends Thread{
      * 数据处理
      */
     private void dataHandle(byte[] bytes){
-//        System.out.println("处理数据: "+ bytes.length);
+//        ("处理数据: "+ bytes.length);
         //判断是否在收集指定数据中
-        int collect = session.getStore().toBeCollectedSize();
-//        System.out.println("是否需要收集的数据 : "+ collect);
+        int collect = toBeCollectedSize();
+//        ("是否需要收集的数据 : "+ collect);
         if (collect>0){
             //进行数据的收集
             dataCollected(bytes,0,bytes.length);
@@ -84,17 +122,17 @@ class SessionContentHandle extends Thread{
     }
 
     private void dataHandle2(byte[] bytes, int offset, int length) {
-//        System.out.println("根据数据 - 处理协议体 :  "+offset+" - "+ (offset+length) +" , size: "+ length);
-        if (length>8){
-            int _offset =  protocolHandler(bytes,offset,8);//处理协议
+//        ("根据数据 - 处理协议体 :  "+offset+" - "+ (offset+length) +" , size: "+ length);
+        if (length> DirectBufferUtils.PROTOCOL_BIT_SIZE){
+            int _offset =  protocolHandler(bytes,offset, DirectBufferUtils.PROTOCOL_BIT_SIZE);//处理协议
             if (_offset>=0){
-                dataCollected(bytes,_offset,length-8);
+                dataCollected(bytes,_offset,length- DirectBufferUtils.PROTOCOL_BIT_SIZE);
             }else{
-//                System.out.println("数据收集错误");
+//                ("数据收集错误");
                 throw new IllegalStateException("bytes read protocol is error, _offset = " + _offset);
             }
         }else{
-//            System.out.println("存入剩余数据");
+//            ("存入剩余数据");
             //存入剩余数据
             dataRemainingStored(bytes,offset,length);
         }
@@ -108,21 +146,21 @@ class SessionContentHandle extends Thread{
                 int contentLength = Protocol.byteArrayToInt(bytes,offset+4);
                 //请求
                 byte aByte = bytes[offset+3];
-                SessionContentStore store = session.getStore();
+                BufferRecThread store = session.getStore();
                 if (aByte == Protocol.STX){
                     //字符编码
-                    store.setContent_type(SessionContentStore.RECEIVE_CHARSET);
-                    store.setCollectedSize(contentLength);
+                    setContent_type(RECEIVE_CHARSET);
+                    setCollectedSize(contentLength);
                     return offset+length;
                 }else if (aByte == Protocol.ETX){
                     //字符串
-                    store.setContent_type(SessionContentStore.RECEIVE_STRING);
-                    store.setCollectedSize(contentLength);
+                    setContent_type(RECEIVE_STRING);
+                    setCollectedSize(contentLength);
                     return offset+length;
                 }else if (aByte == Protocol.EOT){
                     //数据流
-                    store.setContent_type(SessionContentStore.RECEIVE_STREAM);
-                    store.setCollectedSize(contentLength);
+                    setContent_type(RECEIVE_STREAM);
+                    setCollectedSize(contentLength);
                     return offset+length;
                 }
         }
@@ -133,12 +171,11 @@ class SessionContentHandle extends Thread{
 
     /**
      * 数据采集
-     * @param bytes
      */
     private void dataCollected(byte[] bytes,int offset, int length) {
         //判断可收集数据是否大于指定长度
-        int collect = session.getStore().toBeCollectedSize();
-//        System.out.println("收集数据 -  "+ collect+" , 当前数据:"+offset+" - "+ (offset+length)+" ,size:"+ length);
+        int collect =toBeCollectedSize();
+//        ("收集数据 -  "+ collect+" , 当前数据:"+offset+" - "+ (offset+length)+" ,size:"+ length);
         if (length>=collect){
             //可收集到完整数据
             byte[] data = new byte[collect];
@@ -152,7 +189,7 @@ class SessionContentHandle extends Thread{
             notify(data);
             if (length-collect > 0){
                 //此数据还有剩余
-//                System.out.println("存在剩余数据 大小: "+(length-collect) );
+//                ("存在剩余数据 大小: "+(length-collect) );
                 dataHandle2(bytes,collect+offset,length-collect);
             }
         }else{
@@ -162,12 +199,15 @@ class SessionContentHandle extends Thread{
 
     }
 
+    /**
+     * 根据数据协议及内容 -分发数据到指定方法
+     */
     private void notify(byte[] data) {
         SocketImp socketImp = session.getSocketImp();
         if (socketImp!=null && socketImp.getAction()!=null){
-            int type = session.getStore().getContent_type();
-//            System.out.println("type = "+ type,socketImp.getAction().getClass());
-            if(type == SessionContentStore.RECEIVE_CHARSET){ //字符编码数据接收成功
+            int type = getContent_type();
+//            ("type = "+ type,socketImp.getAction().getClass());
+            if(type == RECEIVE_CHARSET){ //字符编码数据接收成功
                 charsetHandle(data);
             }else if (type == RECEIVE_STRING){//字符串接收成功
                 stringContentHandle(data,socketImp.getAction());
@@ -175,14 +215,20 @@ class SessionContentHandle extends Thread{
                 streamHandle(data,socketImp.getAction());
             }
             //复位
-            session.getStore().reset();
+            reset();
         }
     }
-    //处理字符编码
+
+    /**
+     * 处理字符编码
+     * */
     private void charsetHandle(byte[] bytes) {
         charset = Protocol.asciiToString(bytes);
     }
-    //处理字符内容
+
+    /**
+     * 处理字符内容
+     * */
     private void stringContentHandle(byte[] bytes, FtcTcpActions communication) {
         String message;
         try {
@@ -195,7 +241,9 @@ class SessionContentHandle extends Thread{
         communication.receiveString(session,message);
     }
 
-    //处理流
+    /**
+     * 处理字节流
+     * */
     private void streamHandle(byte[] bytes, FtcTcpActions communication) {
         communication.receiveBytes(session,bytes);
     }
@@ -203,18 +251,24 @@ class SessionContentHandle extends Thread{
      * 存入剩余数据
      */
     private void dataRemainingStored(byte[] bytes, int offset, int length) {
-//        System.out.println("存储剩余字节长度: "+ length +" , 起点:"+offset);
-        session.getStore().storeRemainBytes(bytes,offset,length);
+//        ("存储剩余字节长度: "+ length +" , 起点:"+offset);
+        storeRemainBytes(bytes,offset,length);
     }
-    public void close() {
-        isFlag = false;
+
+    public void clear(){
+        //        ("清理缓冲区");
+        if (ramContentBuffer!=null){
+            DirectBufferUtils.clean(ramContentBuffer);
+            ramContentBuffer=null;
+        }
     }
+
 }
 
 
 /**
  if (sessionContentBean.getContent_type() == 1){
- //                                System.out.println("BUFFER: "+ data);
+ //                                ("BUFFER: "+ data);
  //发送字符串到回调
  socketImp.getCommunication().receiveString(this, new String(data.array(), "UTF-8"));
  }else if(sessionContentBean.getContent_type() == 2){

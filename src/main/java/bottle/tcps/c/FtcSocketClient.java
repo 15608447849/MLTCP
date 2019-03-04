@@ -1,10 +1,13 @@
 package bottle.tcps.c;
 
 
+import bottle.backup.client.FBCThreadByFileQueue;
 import bottle.tcps.p.FtcTcpActions;
 import bottle.tcps.p.FtcTcpAioManager;
 import bottle.tcps.p.Session;
 import bottle.tcps.p.SocketImp;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -33,6 +36,7 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
     private InetSocketAddress serverAddress;
     private FtcTcpActions communicationAction;
     private final ServerSession session = new ServerSession(this);//读取写入
+
     public FtcSocketClient(InetSocketAddress serverAddress, FtcTcpActions communicationAction) {
         this(null,serverAddress,communicationAction,3000);
     }
@@ -89,14 +93,14 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
         synchronized (this){
             this.notify();
         }
-//     (Thread.currentThread()+ " 成功连接 - "+serverAddress," ","启动数据读取");
+        //成功连接
         communicationAction.connectSucceed(session);
+        //启动数据读取
         session.read();
     }
 
     @Override
     public void failed(Throwable throwable, Void aVoid) {
-//      ("失败连接- "+serverAddress," ",throwable);
         //连接失败异常,关闭连接
         synchronized (this){
             notify();
@@ -111,17 +115,15 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
      */
     private void closeConnect() {
         if (socket == null) return;
-//"socket 客户端关闭连接"
-        session.clear();//清理会话
         try {
+            session.clear();//清理会话
             try {
                 socket.shutdownInput();
                 socket.shutdownOutput();
             } catch (IOException e) {
                 e.printStackTrace();
             }finally {
-                socket.close();
-                System.out.println(socket+" 关闭管道");
+                socket.close();//关闭管道
             }
         } catch (Exception e) {
             communicationAction.error(session,null,e);

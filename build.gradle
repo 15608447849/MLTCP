@@ -1,6 +1,6 @@
+// ttps://central.sonatype.org/pages/gradle.html
 plugins {
     id 'java'
-    id 'maven'
 }
 
 group 'bottle'
@@ -11,6 +11,10 @@ sourceCompatibility = 1.8
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
 }
+tasks.withType(Javadoc) {
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.addStringOption('encoding', 'UTF-8')
+}
 
 repositories {
     maven { url "http://maven.aliyun.com/nexus/content/groups/public/"}
@@ -19,15 +23,85 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
+    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'org.apache.logging.log4j:log4j-api:2.11.2'
+    implementation 'org.apache.logging.log4j:log4j-core:2.11.2'
 }
 
+
+
+
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+//文档
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+//源代码
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+//jar产出的配置
+artifacts {
+    archives javadocJar, sourcesJar
+}
+signing {
+    sign configurations.archives
+}
+
+group = "io.github.15608447849"
+archivesBaseName = "mltcp"
+version = "1.0.0"
+
 uploadArchives{
-    repositories.mavenDeployer{
-        repository(url:"https://oss.sonatype.org/content/repositories/snapshots"){
-            authentication(userName:"leeping",password:"Lzp19940202.")
+    repositories{
+        mavenDeployer{
+
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+
+                name 'mltcp'
+                packaging 'jar'
+                description 'java nio2 tcp imps'
+                url 'https://github.com/15608447849/MLTCP'
+
+                scm {
+                    connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
+                    developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
+                    url 'http://foo.googlecode.com/svn/trunk/'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id 'bottle'
+                        name 'lishiping'
+                        email '793065165@qq.com'
+                    }
+                }
+
+            }
+
         }
-        pom.version = "1.0.0"
-        pom.artifactId = "mltcp"
-        pom.groupId = "com.bottle"
     }
 }
+

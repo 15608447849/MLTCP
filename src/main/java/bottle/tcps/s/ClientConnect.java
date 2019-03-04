@@ -64,16 +64,16 @@ public class ClientConnect implements SocketImp {
     public void close(){
         try {
                 try {
-                    System.out.println(socket+", 关闭连接");
+//                    (socket+", 关闭连接");
                     socket.shutdownInput();
-//                    System.out.println(socket,"关闭输入流");
+//                    (socket,"关闭输入流");
                     socket.shutdownOutput();
-//                    System.out.println(socket,"关闭输出流");
+//                    (socket,"关闭输出流");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }finally {
                     socket.close();
-//                    System.out.println(socket,"关闭管道");
+//                    (socket,"关闭管道");
                 }
             session.clear();
         } catch (Exception e) {

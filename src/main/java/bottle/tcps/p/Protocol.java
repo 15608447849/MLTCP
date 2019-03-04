@@ -43,6 +43,7 @@ import java.util.Arrays;
  01111111   127     DEL (delete)	删除
  */
 public class Protocol {
+
     public static  final int MTU = 1500-20-8;
 
     public static final byte NUL = 0;//空字符
@@ -52,7 +53,6 @@ public class Protocol {
     public static final byte EOT = 4;//传输结束
     public static final byte ENQ = 5;//请求
     public static final byte ACK = 6;//收到通知
-
     public static final byte BEL = 7;
     public static final byte BS = 8;
     public static final byte HT = 9;
@@ -79,10 +79,6 @@ public class Protocol {
     public static final byte RS = 30;
     public static final byte US = 30;
     public static final byte DEL = 127;
-
-
-
-
 
     public static String getBit(byte by){
         StringBuffer sb = new StringBuffer();
@@ -121,13 +117,10 @@ public class Protocol {
 
 
     public static void main(String[] args){
-        byte EOT =8;
-        byte[] a = new String(" ").getBytes();
-        System.out.println(getBit(EOT));
+        byte EOT = 8;
+        byte[] a = " ".getBytes();
         String s = "GBK";
         byte[] d = stringToAscii(s);
-
-        System.out.println(Arrays.toString(d)+" - "+asciiToString(d));
     }
 
     public static byte[] intToByteArray(int a) {
