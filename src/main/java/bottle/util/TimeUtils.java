@@ -13,7 +13,7 @@ public class TimeUtils {
     /**
      * 一天得间隔时间
      */
-    public static final long PERIOD_DAY = 24 * 60 * 60 * 1000;
+    public static final long PERIOD_DAY = 24 * 60 * 60 * 1000L;
 
     /**添加x天*/
     private static Date addDay(Date date, int num) {

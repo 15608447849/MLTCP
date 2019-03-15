@@ -28,8 +28,6 @@ public class SliceUtil {
 
     /**
      * 对文件分片,返回分片信息
-     * @param file
-     * @return
      */
     public static ArrayList<SliceInfo> fileSliceInfoList(File file, int sliceSize){
         long fileSize = file.length();
@@ -84,9 +82,6 @@ public class SliceUtil {
 
     /**
      * 滚动检测
-     * @param table
-     * @param file
-     * @return
      */
     public static SliceScrollResult scrollCheck(Hashtable<String, LinkedList<SliceInfo>> table, File file, int sliceSize) {
         RandomAccessFile randomAccessFile = null;

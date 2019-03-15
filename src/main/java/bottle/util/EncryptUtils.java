@@ -36,10 +36,6 @@ public class EncryptUtils {
     }
     /**
      * 获取文件md5的byte值
-     *
-     * @param file
-     * @return
-     * @throws IOException
      */
     public static byte[] getFileMd5(File file){
         byte[] result = null;
@@ -55,17 +51,12 @@ public class EncryptUtils {
     }
     /**
      * 获取文件MD5的String
-     * @param file
-     * @return
-     * @throws IOException
      */
     public static String getFileMd5ByString(File file) throws Exception {
         return byteToHexString(getFileMd5(file));
     }
     /**
      * 获取一段字节数组的md5
-     * @param buffer
-     * @return
      */
     public static byte[] getBytesMd5(byte[] buffer) {
         byte[] result = null;
@@ -77,8 +68,6 @@ public class EncryptUtils {
     }
     /**
      * 获取一段字节数组的md5
-     * @param buffer
-     * @return
      */
     public static byte[] getBytesMd5(byte[] buffer,int offset,int len) {
         byte[] result = null;
@@ -98,8 +87,6 @@ public class EncryptUtils {
     }
     /**
      * byte->16进制字符串
-     * @param bytes
-     * @return
      */
     public static String byteToHexString(byte[] bytes) {
         StringBuffer hexStr = new StringBuffer();
@@ -119,9 +106,6 @@ public class EncryptUtils {
 
     /**
      * 比较MD5字节数组
-     * @param digesta
-     * @param digestb
-     * @return
      */
     public static boolean isEqualMD5(byte[] digesta,byte[] digestb){
         try {
@@ -149,8 +133,6 @@ public class EncryptUtils {
 
     /**
      * MD5 string 加密
-     * @param str
-     * @return
      */
     public static String encryption(String str){
         return byteToHexString(getBytesMd5(str.getBytes()));

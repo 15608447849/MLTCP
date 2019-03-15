@@ -40,11 +40,12 @@ public class FileUtils {
         return  path;
     }
 
-    /**检查目录 存在返回true*/
+    /**
+     * 检查目录 存在返回true
+     */
     public static boolean checkDir(String dir){
         File dirs = new File(dir);
         if(!dirs.exists()){
-//            ("mkdirs file : "+ dirs.getAbsolutePath());
             return dirs.mkdirs();
         }
         return true;
@@ -52,16 +53,12 @@ public class FileUtils {
 
     /**
      * 删除单个文件
-     *
-     * @param sPath
-     *            被删除文件的文件名
+     * @param sPath 被删除文件的文件名
      * @return 单个文件删除成功返回true，否则返回false
      */
     public static boolean deleteFile(String sPath) {
-
-            File file = new File(sPath);
+        File file = new File(sPath);
         if ( file.exists() && file.isFile()) {
-//            ("delete file : "+ file.getAbsolutePath());
             return file.delete();
         }
         return false;
@@ -70,7 +67,6 @@ public class FileUtils {
     public static void closeStream(FileChannel in, FileChannel out){
         try {
             if (in != null) in.close();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -80,24 +76,21 @@ public class FileUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
+
     public static void closeStream(InputStream in, OutputStream out, RandomAccessFile raf,HttpURLConnection httpConnection){
         try {
             if (in != null) in.close();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
         try {
             if (httpConnection != null) httpConnection.disconnect();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
         try {
             if (out != null) out.close();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -106,8 +99,8 @@ public class FileUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
+
     //从命名 不会删除源文件,需要自行判断决定是否删除
     public static boolean rename(File sourceFile,File targetFile){
         try {
@@ -134,8 +127,6 @@ public class FileUtils {
             in.transferTo(0, in.size(), out);//连接两个通道，并且从in通道读取，然后写入out通道
             out.close();
             in.close();
-//            ("启动文件复制: "+ source+ " - "+ target+" 成功.");
-
             return true;
         }  catch (IOException e) {
             e.printStackTrace();
@@ -147,33 +138,23 @@ public class FileUtils {
 
     /**
      * 保存对象到文件
-     * @param obj
      */
     public static void writeObjectToFile(Object obj, String filePath)
     {
-
-
         File file =new File(filePath);
         FileOutputStream out;
         try {
             out = new FileOutputStream(file);
             ObjectOutputStream objOut=new ObjectOutputStream(out);
-
             objOut.writeObject(obj);
             objOut.flush();
             objOut.close();
-//            ("序列化","成功");
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
     }
 
-
-
-    public static Object readObjectFromFile(String filePath)
-    {
+    public static Object readObjectFromFile(String filePath) {
         Object temp=null;
         File file =new File(filePath);
         FileInputStream in;
@@ -188,13 +169,11 @@ public class FileUtils {
         return temp;
     }
 
-
     public static boolean writeMapToFile(Map<String,String> maps, String path){
         try {
             Map<String,String> map = maps;
             File file = new File(path);
             if (!file.exists()) file.createNewFile();
-
             StringBuilder str = new StringBuilder();
             Iterator iter = map.entrySet().iterator();
             while(iter.hasNext()){
@@ -218,7 +197,7 @@ public class FileUtils {
             if (!file.exists()) return null;
             StringBuilder str = new StringBuilder();
             BufferedReader reader = new BufferedReader(new FileReader(file));
-            String line=null;
+            String line;
             String key;
             String val;
             Map<String,String> map = new HashMap<>();
@@ -279,7 +258,7 @@ public class FileUtils {
             System.arraycopy(bytes, 0, source, 0, endPoint);
             return  new String(source);
         } catch (Exception e) {
-            ;
+            e.printStackTrace();
         }finally {
             try {
                 if (raf!=null) raf.close();
@@ -293,6 +272,7 @@ public class FileUtils {
     public static String getFileText(String tmpFile) {
         return getFileText(tmpFile,true);
     }
+
     public static String getFileText(String tmpFile,boolean isDelete) {
         FileChannel inChannel = null;
         try {
@@ -317,6 +297,9 @@ public class FileUtils {
         return null;
     }
 
+    /**
+     * 查看文件是否存在 不存在创建
+     */
     public static boolean checkFile(String path) {
         File file = new File(path);
         if (file.exists()) return true;
@@ -335,7 +318,6 @@ public class FileUtils {
     }
 
     public static boolean writeStringToFile(String content, String pathDir,String fileName,boolean isAppend) {
-
         if (!checkDir(pathDir)) return false;
         File file = new File(pathDir+SEPARATOR+fileName);
         if (!file.exists()){
@@ -352,6 +334,7 @@ public class FileUtils {
            out.write(Charset.forName("UTF-8").encode(content));
            return true;
         } catch (IOException e) {
+            e.printStackTrace();
         } finally {
             closeStream(null,out);
         }
@@ -376,9 +359,6 @@ public class FileUtils {
         }
     }
 
-
-
-
     public static String readFileText(String path,String charset){
         if (StringUtils.isEmpty(charset)) charset = "UTF-8";
         try(FileInputStream fis = new FileInputStream(path)) {
@@ -394,6 +374,7 @@ public class FileUtils {
         }
         return null;
     }
+
     public static <T> T readFileJson2Object(String path,String charset,Class<T> classType){
         String json = readFileText(path,charset);
 
@@ -406,4 +387,5 @@ public class FileUtils {
         }
         return null;
     }
+
 }
