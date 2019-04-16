@@ -1,7 +1,4 @@
 package bottle.tcps.p;
-
-import sun.nio.ch.DirectBuffer;
-
 import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -22,12 +19,6 @@ class BufferRecThread extends Thread {
         this.session =session;
         this.start();
     }
-
-
-
-
-
-
 
     /**
      * 系统接收到的缓冲区 包数据
