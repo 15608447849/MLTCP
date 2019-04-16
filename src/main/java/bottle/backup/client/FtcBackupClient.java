@@ -2,6 +2,7 @@ package bottle.backup.client;
 
 import bottle.backup.beans.BackupTask;
 import bottle.util.FileUtils;
+import bottle.util.Log4j;
 import com.google.gson.Gson;
 import bottle.backup.imps.FtcBackAbs;
 import bottle.backup.beans.BackupFile;
@@ -63,7 +64,7 @@ public class FtcBackupClient extends FtcBackAbs {
                if (e instanceof IOException){
 
                    if (task.getLoopCount() > 3) {
-                       System.out.println("无法同步任务到目标服务器("+task.getServerAddress()+")");
+                       Log4j.info("无法同步任务到目标服务器("+task.getServerAddress()+")");
                        return;
                    }
 
@@ -215,7 +216,7 @@ public class FtcBackupClient extends FtcBackAbs {
     private synchronized void  addServerAddress(InetSocketAddress serverAddress) {
         if (serverAddress==null) return;
         if (!serverAddressList.contains(serverAddress)){
-            System.out.println("添加远程同步服务器地址 : "+serverAddress);
+            Log4j.info("添加远程同步服务器地址 : "+serverAddress);
             serverAddressList.add(serverAddress);
         }
     }

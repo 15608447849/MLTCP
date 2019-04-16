@@ -42,7 +42,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
     public void bindSession( Session session){
         // session.getSocketImp().getSocket().toString()+"-"+
         flag = getClass().getSimpleName()+"-"+ftcBackupServer.getSockSer().getCurrentClientSize()+" >>  ";
-//        System.out.println(flag);
+//        Log4j.info(flag);
         session.getSocketImp().setAction(this);//绑定传输管道
         session.getSocketImp().getSession().getOperation().writeString("start","utf-8");
     }
@@ -72,7 +72,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
      * 处理
      */
     private void handle(Session session,Map<String, String> map) {
-//        System.out.println(flag+ map);
+//        Log4j.info(flag+ map);
         String protocol = map.get("protocol");
 //        (flag+" "+protocol);
         if (protocol.equals(Protocol.C_FILE_BACKUP_QUEST)){
@@ -148,7 +148,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
     }
     //接受客户端发送的传输开始请求
     private void receiveFileStart(Session session, Map<String, String> map) {
-//        System.out.println(flag+ map);
+//        Log4j.info(flag+ map);
         closeResource();//关闭资源
         String fs_path = ftcBackupServer.getDirectory()+map.get("path")+map.get("filename") + SUFFER; //获取备份后缀的文件
         long length = Long.valueOf(map.remove("length")); //获取文件大小
@@ -209,7 +209,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
 
     //接受完成 (客户端通知 文件传输完成)
     private void receiveFileEnd(Session session, Map<String, String> map) {
-//        System.out.println(flag+ map);
+//        Log4j.info(flag+ map);
         if (randomAccessFile==null) return;
 
         //获取备份后缀的文件
@@ -254,7 +254,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
     @Override
     public void receiveBytes(Session session, byte[] bytes) {
 //            cpos+=bytes.length;
-//        System.out.println("已传输字节数:"  + cpos);
+//        Log4j.info("已传输字节数:"  + cpos);
             if (randomAccessFile!=null){
                 try {
                     randomAccessFile.write(bytes);

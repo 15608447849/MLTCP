@@ -14,7 +14,7 @@ public class MThread extends Thread {
     public MThread(String name,int storeLimit) {
         setName(name);
         this.storeLimit = storeLimit;
-        this.runQueue = new LinkedBlockingQueue(storeLimit);
+        this.runQueue = new LinkedBlockingQueue<>(storeLimit);
     }
 
     /**

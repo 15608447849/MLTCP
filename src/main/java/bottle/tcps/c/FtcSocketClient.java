@@ -6,8 +6,6 @@ import bottle.tcps.p.FtcTcpActions;
 import bottle.tcps.p.FtcTcpAioManager;
 import bottle.tcps.p.Session;
 import bottle.tcps.p.SocketImp;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

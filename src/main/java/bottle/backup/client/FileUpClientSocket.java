@@ -4,6 +4,7 @@ import bottle.backup.slice.SliceInfo;
 import bottle.backup.slice.SliceMapper;
 import bottle.backup.slice.SliceScrollResult;
 import bottle.backup.slice.SliceUtil;
+import bottle.util.Log4j;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -14,8 +15,6 @@ import bottle.tcps.c.FtcSocketClient;
 import bottle.tcps.p.FtcTcpActionsAdapter;
 import bottle.tcps.p.Session;
 import bottle.tcps.p.SessionOperation;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -30,7 +29,6 @@ import static bottle.backup.imps.Protocol.*;
  * Created by user on 2017/11/23.
  */
 public class FileUpClientSocket extends FtcTcpActionsAdapter{
-    private static Logger logger = LogManager.getLogger(FileUpClientSocket.class);
 
     private final FtcSocketClient socketClient;
     private final String flag ;
@@ -243,7 +241,7 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
                 while( isUsing && ( len = randomAccessFile.read(bytes) )> 0){
                     //pos += len;
                     op.writeBytes(bytes,0,len);
-                    //System.out.println(Thread.currentThread()+" "+flag+" "+curFile + " 单次量 : "+ len+" 进度: "+ String.format("%.2f",(pos * 1.0f / curFile.getFileLength())));
+                    //Log4j.info(Thread.currentThread()+" "+flag+" "+curFile + " 单次量 : "+ len+" 进度: "+ String.format("%.2f",(pos * 1.0f / curFile.getFileLength())));
                     endUsingTime = System.currentTimeMillis();
                 }
             }else{
@@ -263,7 +261,7 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
                 }
             }
 
-            if (isUsing) logger.info(
+            if (isUsing) Log4j.info(
                     Thread.currentThread() + flag +" 结束 "+curFile.getFullPath()+
                     " 大小:"+curFile.getFileLength() +
                             " 时间:" +(System.currentTimeMillis() - time)+" ms"
@@ -280,7 +278,7 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
         //通知服务器传输完成
         map.put("protocol",C_FILE_BACKUP_TRS_END);
         socketClient.getSession().getOperation().writeString(gson.toJson(map),CHARSET); //结束传输
-                logger.info(flag+ " 通知结束:"+ map);
+        Log4j.info(flag+ " 通知结束:"+ map);
 
     }
 

@@ -1,13 +1,11 @@
 package bottle.tcps.p;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import bottle.util.Log4j;
 
 /**
  * Created by user on 2017/11/23.
  */
 public abstract class FtcTcpActionsAdapter implements FtcTcpActions{
-    private static final Logger logger = LogManager.getLogger(FtcTcpActionsAdapter.class.getName());
 
     @Override
     public void connectSucceed(Session session) {
@@ -41,12 +39,12 @@ public abstract class FtcTcpActionsAdapter implements FtcTcpActions{
 
         if (throwable!=null){
 //            throwable.printStackTrace();
-            logger.error("连接错误 " + session.getSocket(),throwable);
+            Log4j.error("连接错误 " + session.getSocket(),throwable);
 //            (session.getSocket(),throwable.getCause());
         }
         if (e!=null){
 //            e.printStackTrace();
-            logger.error("连接错误 " + session.getSocket(),e);
+            Log4j.error("连接错误 " + session.getSocket(),e);
 //            (session.getSocket(),e.getCause());
         }
     }

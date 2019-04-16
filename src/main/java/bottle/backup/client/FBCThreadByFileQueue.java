@@ -2,7 +2,7 @@ package bottle.backup.client;
 
 import bottle.backup.beans.BackupFile;
 import bottle.backup.beans.BackupTask;
-import org.apache.logging.log4j.*;
+import bottle.util.Log4j;
 
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -12,7 +12,6 @@ import java.util.concurrent.BlockingQueue;
  * Created by user on 2017/11/24.
  */
 public class FBCThreadByFileQueue extends FBCThread {
-    private static Logger logger = LogManager.getLogger(FBCThreadByFileQueue.class);
 
     private final BlockingQueue<BackupTask> queue ;
 
@@ -30,7 +29,7 @@ public class FBCThreadByFileQueue extends FBCThread {
             try {
                     if (queue != null){
                         BackupTask task = queue.take();
-//                        System.out.println(" --- "+ task);
+//                        Log4j.info(" --- "+ task);
 //                    ("获取到同步任务,准备执行" +task);
                     ftcBackupClient.bindSocketSyncUpload(task);
                     }
@@ -45,9 +44,9 @@ public class FBCThreadByFileQueue extends FBCThread {
 
     public boolean putTask(BackupTask task) {
         try {
-//            System.out.println("添加同步任务 " +task.toString());
-            logger.info("添加同步任务 " +task.toString());
-//            System.out.println("添加同步任务 " +task.toString());
+//            Log4j.info("添加同步任务 " +task.toString());
+            Log4j.info("添加同步任务 " +task.toString());
+//            Log4j.info("添加同步任务 " +task.toString());
             queue.put(task);
             return true;
         } catch (InterruptedException e) {
