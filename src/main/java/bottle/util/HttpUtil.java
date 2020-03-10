@@ -1,12 +1,12 @@
 package bottle.util;
 
+import javax.net.ssl.*;
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.*;
 
 
 /**
@@ -126,8 +126,14 @@ public class HttpUtil {
         // 是否表单数据提交 默认 = false
         private boolean isForm = false;
 
-        //是否 流数据传输
-        private boolean isStream = false;
+        //是否 二进制数据流 传输
+        private boolean isBinaryStream = false;
+
+        //二进制流
+        private InputStream binaryStreamIn;
+
+        //上传的二进制流文件
+        private File binaryStreamInByFile;
 
         // 如果是表单数据提交 ,提交的表单项
         private List<FormItem> formList = new ArrayList<>();
@@ -144,7 +150,7 @@ public class HttpUtil {
         /** 监听回调 */
         private Callback callback;
 
-        private final int locCacheByteMax = 1024*8;
+        private int locCacheByteMax = 1024*8;
 
         public Request(String url) {
             this(url,GET,null);
@@ -201,19 +207,27 @@ public class HttpUtil {
             return this;
         }
 
-        //表单数据
-        public Request setFormSubmit() {
+        //文本表单提交
+        public Request setTextFormSubmit(){
             isUpdate = true;
-            isForm = true;
-            isStream = false;
+            isForm = false;
+            isBinaryStream = false;
             return this;
         }
 
-        //流传输
-        public Request setStream(){
+        //表单数据
+        public Request setFileFormSubmit() {
+            isUpdate = true;
+            isForm = true;
+            isBinaryStream = false;
+            return this;
+        }
+
+        //二进制流上传
+        public Request setBinaryStreamUpload(){
             isUpdate = true;
             isForm = false;
-            isStream = true;
+            isBinaryStream = true;
             return this;
         }
 
@@ -233,13 +247,30 @@ public class HttpUtil {
             return this;
         }
 
+        //添加表单项-文件
         public Request addFormItem(FormItem file) {
             formList.add(file);
             return this;
         }
 
+        //添加二进制流数据
+        public Request setBinaryStreamInput(InputStream in){
+            this.binaryStreamIn = in;
+            return this;
+        }
+
+        public Request setBinaryStreamFile(File file){
+            this.binaryStreamInByFile = file;
+            return this;
+        }
+
         public Request setDownloadFileLoc(File downloadFileLoc) {
             this.downloadFileLoc = downloadFileLoc;
+            return this;
+        }
+
+        public Request setLocalCacheByteMax(int cacheMax){
+            this.locCacheByteMax = cacheMax;
             return this;
         }
 
@@ -263,14 +294,15 @@ public class HttpUtil {
 
     //响应
     public static final class Response {
+        private URLConnection connection;
         private String message;
         private Object data;
         private boolean isSuccess;
         private boolean isError;
         private Exception exception;
 
-        Response() {
-
+        Response(URLConnection connection) {
+            this.connection = connection;
         }
 
         Response(Object data){
@@ -283,10 +315,12 @@ public class HttpUtil {
             isError = true;
         }
 
-        Response(boolean isSuccess,String message) {
+        Response(boolean isSuccess,URLConnection connection,String message) {
             this.isSuccess = isSuccess;
+            this.connection = connection;
             this.message = message;
         }
+
 
         public String getMessage() {
             return message;
@@ -307,7 +341,12 @@ public class HttpUtil {
         public Exception getException() {
             return exception;
         }
+
+        public URLConnection getConnection(){
+            return connection;
+        }
     }
+
 
     /**
      * 文件上传
@@ -319,19 +358,19 @@ public class HttpUtil {
         InputStream in = null;
         try {
             URL url = new URL(request.url);
-            con = (HttpURLConnection) url.openConnection();
+            con = request.url.startsWith("https") ?
+                    (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();
             connectionSetting(con, request);
             connectionAddHeadParams(con,request);
             out = con.getOutputStream();
             updateFileByForm(out,request,callback);
-//            updateFileByStream(out,request,callback); 未实现
+            updateFileByStream(out,request,callback);
             con.connect(); //连接服务
             if ( con.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 in = con.getInputStream();
-                String result = inputStreamToString(in);
-                if (callback!=null) callback.onResult(new Response(true,result));
+                if (callback!=null) callback.onResult(new Response(true,con,inputStreamToString(in)));
             } else {
-                if (callback!=null) callback.onResult(new Response());
+                if (callback!=null) callback.onResult(new Response(con));
             }
 
         } catch (Exception e) {
@@ -339,6 +378,17 @@ public class HttpUtil {
         } finally {
           closeIo(out,in);
           if (con!=null) con.disconnect();//断开连接
+        }
+    }
+
+    private static void updateFileByStream(OutputStream out, Request request, Callback callback) {
+        //如果不是表单 - 又需要上传的存在 文件/流
+        if (!request.isBinaryStream) return;
+        if (request.binaryStreamIn != null){
+            writeInputStreamToOut(out,request.binaryStreamIn,request,callback);//接入流
+        }
+        if (request.binaryStreamInByFile != null){
+            writeFileStreamToOut(out,request.binaryStreamInByFile,request,callback);//接入文件流
         }
     }
 
@@ -387,7 +437,7 @@ public class HttpUtil {
     */
     private static void updateFileByForm(OutputStream out, Request request,Callback callback) throws Exception{
         //判断表单是否有效
-        if (!request.isForm || request.formList==null || request.formList.size() == 0) return ;
+        if (!request.isForm || request.formList == null || request.formList.size() == 0) return ;
 
         for(FormItem item : request.formList){
                 //表单数据
@@ -460,31 +510,30 @@ public class HttpUtil {
         }finally {
             closeIo(inputStream);
         }
-
     }
 
     /**文件下载*/
     private static void fileDownload(Request request){
-
         Callback callback = request.callback;
         HttpURLConnection con = null;
         OutputStream out = null;//本地文件输出流
         InputStream in = null; //服务器下载输入流
         try {
             URL url = new URL(request.url);
-            con = (HttpURLConnection) url.openConnection();
+            con = request.url.startsWith("https") ?
+                    (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();;
             connectionSetting(con,request);
             connectionAddHeadParams(con,request);
             con.connect();//连接
             int code = con.getResponseCode();
             String message = con.getResponseMessage();
+
             if ( code == HttpURLConnection.HTTP_OK || code == HttpURLConnection.HTTP_PARTIAL) {
                 in = con.getInputStream();
                 if (request.isText){
                     //访问文本信息
                     String text = inputStreamToString(in);
-                    if (callback!=null) callback.onResult(new Response(true, text)
-                    );
+                    if (callback!=null) callback.onResult(new Response(true,con, text));
                 }else{
                     //下载文件
                     long fileLength = con.getContentLength();
@@ -492,11 +541,10 @@ public class HttpUtil {
                     if (fileLength <= 0) throw new IllegalArgumentException("远程服务器文件不存在");
                     writeServiceStreamToFile(in,fileLength,request,callback);
                 }
-
             }else{
                 if (callback!=null) callback.onResult(
                         new Response(
-                        false,
+                        false,null,
                         "response code = "+code+", response message = "+ message)
                 );
             }
@@ -570,7 +618,9 @@ public class HttpUtil {
 
         if (request.isForm){
             con.setRequestProperty("Content-Type", HttpFrom.CONTENT_TYPE);//表单传输
-        }else{
+        }
+
+        if (request.isBinaryStream){
             con.setRequestProperty("Content-Type", "application/octet-stream");//传输数据类型,流传输
         }
 
@@ -600,5 +650,89 @@ public class HttpUtil {
             }
         }
     }
+
+    public static String formText(String url, String type, Map<String,String> params){
+
+        String text = null;
+        HttpURLConnection con = null;
+        try{
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, String> e : params.entrySet()) {
+                sb.append(e.getKey());
+                sb.append("=");
+                sb.append(URLEncoder.encode(e.getValue(),"UTF-8"));
+                sb.append("&");
+            }
+            sb.substring(0, sb.length() - 1);
+
+            String content = sb.toString();
+            if (type .equals("GET") && params.size()>0){
+                url += "?" +content ;
+            }
+
+            con = (HttpURLConnection) new URL(url).openConnection();
+            con.setRequestMethod(type);
+            con.setDoOutput(true);
+            con.setDoInput(true);
+            con.setUseCaches(false);
+            con.setRequestProperty("Charset", "UTF-8");
+            con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            if (type.equals("POST")){
+                OutputStreamWriter osw = new OutputStreamWriter(con.getOutputStream(), StandardCharsets.UTF_8);
+                osw.write(content);
+                osw.flush();
+                osw.close();
+            }
+            BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
+            sb.delete(0,sb.length());
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+            br.close();
+            text = sb.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            if (con!=null)  con.disconnect();
+        }
+        return text;
+    }
+
+    public static String contentToHttpBody(String url, String type, String json){
+        String text = null;
+        HttpURLConnection con = null;
+        try{
+            con = (HttpURLConnection) new URL(url).openConnection();
+            con.setRequestMethod(type);
+            con.setDoOutput(true);
+            con.setDoInput(true);
+            con.setUseCaches(false);
+            con.setRequestProperty("Charset", "UTF-8");
+            con.setRequestProperty("Content-Type", "application/json");
+
+            if (json!=null){
+                OutputStreamWriter osw = new OutputStreamWriter(con.getOutputStream(), StandardCharsets.UTF_8);
+                osw.write(json);
+                osw.flush();
+                osw.close();
+            }
+            BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
+            String line;
+            StringBuilder sb = new StringBuilder();
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+            br.close();
+            text = sb.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            if (con!=null)  con.disconnect();
+        }
+        return text;
+    }
+
+
 
 }

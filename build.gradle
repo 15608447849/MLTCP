@@ -25,6 +25,7 @@ dependencies {
     compile 'com.google.code.gson:gson:2.8.5'
     compile 'org.apache.logging.log4j:log4j-api:2.11.2'
     compile 'org.apache.logging.log4j:log4j-core:2.11.2'
+//    compile 'org.apache.directory.studio:org.apache.commons.codec:1.8'
 }
 
 apply plugin: 'maven'

@@ -64,6 +64,29 @@ public class FileUtils {
         return false;
     }
 
+    public static void deleteFileOrDir(String path){
+            File file = new File(path);
+            if (file.exists()){
+                // 当且仅当此抽象路径名表示的文件存在且 是一个目录时，返回 true
+                if ( file.isDirectory()) {
+                    String[] files = file.list();
+                    if (files!=null){
+                        for (int i = 0; i < files.length; i++){
+                            deleteFileOrDir(path+FileUtils.SEPARATOR+files[i]);
+                        }
+                    }
+                    file.delete();
+                }else{
+                    deleteFile(path);
+                }
+            }
+
+    }
+
+    public static void main(String[] args) {
+        deleteFileOrDir("C:\\Users\\user\\Desktop\\顺丰 - 副本");
+    }
+
     public static void closeStream(FileChannel in, FileChannel out){
         try {
             if (in != null) in.close();

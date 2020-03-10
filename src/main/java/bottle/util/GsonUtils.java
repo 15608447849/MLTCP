@@ -2,8 +2,12 @@ package bottle.util;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONTokener;
 
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,4 +78,21 @@ public class GsonUtils {
         }
         return list;
     }
+    /**
+     * 判断是否是数组类型的json字符串
+     */
+    public static boolean checkJsonIsArray(String json){
+        try {
+            Object jsonObj = new JSONTokener(json).nextValue();
+            if (jsonObj instanceof JSONArray) {
+                return true;
+            }
+        } catch (JSONException ignored) { }
+        return false;
+    }
+
+    public static int convertInt(Object val){
+        return new BigDecimal(String.valueOf(val)).intValue();
+    }
+
 }
