@@ -15,7 +15,11 @@ public class IOThreadPool  extends Thread implements IThreadPool {
     }
 
     private ThreadPoolExecutor createIoExecutor(int capacity) {
-        return new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), capacity / 2, 30L, TimeUnit.SECONDS, new ArrayBlockingQueue(capacity), (r) -> {
+        return new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(),
+                capacity / 2,
+                30L,
+                TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(capacity), (r) -> {
             Thread thread = new Thread(r);
             thread.setName("t-pio#-" + thread.getId());
             return thread;

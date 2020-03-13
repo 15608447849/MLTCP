@@ -111,6 +111,8 @@ public class HttpUtil {
 
         public static final String POST = "POST";
 
+        public static final String HEAD = "HEAD";
+
         // true 上传文件
         private boolean isUpdate = false;
         // true 下载文件
@@ -161,6 +163,11 @@ public class HttpUtil {
         }
 
         public Request(String url, String type, Callback callback) {
+//            try {
+//                this.url = URLEncoder.encode(url,"UTF-8");
+//            } catch (UnsupportedEncodingException e) {
+//                throw new RuntimeException(e);
+//            }
             this.url = url;
             this.type = type;
             this.callback = callback;
@@ -521,7 +528,9 @@ public class HttpUtil {
         try {
             URL url = new URL(request.url);
             con = request.url.startsWith("https") ?
-                    (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();;
+                    (HttpsURLConnection) url.openConnection() :
+                    (HttpURLConnection) url.openConnection();
+
             connectionSetting(con,request);
             connectionAddHeadParams(con,request);
             con.connect();//连接
@@ -604,7 +613,7 @@ public class HttpUtil {
 
         con.setRequestProperty("Charset", "UTF-8");
         con.setRequestProperty("Connection", "keep-alive");  //设置连接的状态
-        con.setRequestProperty("Connection", "keep-alive");  //设置连接的状态
+
 
         if (request.isUpdate){
             con.setDoOutput(true);
