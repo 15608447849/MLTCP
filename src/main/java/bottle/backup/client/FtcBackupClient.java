@@ -1,7 +1,7 @@
 package bottle.backup.client;
 
 import bottle.backup.beans.BackupTask;
-import bottle.util.FileUtils;
+import bottle.util.FileTool;
 import bottle.util.Log4j;
 import com.google.gson.Gson;
 import bottle.backup.imps.FtcBackAbs;
@@ -106,7 +106,7 @@ public class FtcBackupClient extends FtcBackAbs {
 
     public BackupFile genBackupFile(File file) {
         try {
-            String path  = FileUtils.replaceFileSeparatorAndCheck(file.getCanonicalPath(),null,null);
+            String path  = FileTool.replaceFileSeparatorAndCheck(file.getCanonicalPath(),null,null);
             if (path.contains(directory)){
                 path = path.substring(directory.length());
                 return new BackupFile(directory,path);

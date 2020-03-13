@@ -3,8 +3,7 @@ package bottle.backup.imps;
 
 import bottle.threadpool.IOThreadPool;
 import bottle.threadpool.IThreadPool;
-import bottle.threadpool.MThreadPool;
-import bottle.util.FileUtils;
+import bottle.util.FileTool;
 
 import java.io.File;
 
@@ -18,7 +17,7 @@ public abstract class FtcBackAbs {
     //目录
     protected final String directory ;
     public FtcBackAbs(String directory) {
-        this.directory = FileUtils.replaceFileSeparatorAndCheck(directory,null, File.pathSeparator);
+        this.directory = FileTool.replaceFileSeparatorAndCheck(directory,null, File.pathSeparator);
     }
 
     public String getDirectory() {

@@ -1,7 +1,7 @@
 package bottle.backup.beans;
 
 
-import bottle.util.TimeUtils;
+import bottle.util.TimeTool;
 
 import java.util.Date;
 import java.util.Timer;
@@ -21,9 +21,9 @@ public class TimerBean {
     private Timer timer ;
     public TimerBean(String dateStr,Action action) throws IllegalArgumentException {
 
-        Date date = TimeUtils.str_yMd_Hms_2Date(dateStr);
+        Date date = TimeTool.str_yMd_Hms_2Date(dateStr);
         if (date==null){
-            date = TimeUtils.str_Hms_2Date(dateStr);
+            date = TimeTool.str_Hms_2Date(dateStr);
             if (date!=null){
                 type = LOOP; //每天几点执行
             }
@@ -55,8 +55,8 @@ public class TimerBean {
     }
     public void schedule(){
         if (task==null || timer==null) return;
-        if (type==FIXED_POINT) timer.schedule(task,date,TimeUtils.PERIOD_DAY);
-        if (type==LOOP) timer.schedule(task,date,TimeUtils.PERIOD_DAY);
+        if (type==FIXED_POINT) timer.schedule(task,date, TimeTool.PERIOD_DAY);
+        if (type==LOOP) timer.schedule(task,date, TimeTool.PERIOD_DAY);
     }
     /**
      * 取消

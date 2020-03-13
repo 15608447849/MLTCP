@@ -5,8 +5,8 @@ import bottle.backup.slice.SliceMapper2;
 import bottle.backup.slice.SliceUtil;
 import bottle.tcps.p.FtcTcpActionsAdapter;
 import bottle.tcps.p.Session;
-import bottle.util.EncryptUtils;
-import bottle.util.FileUtils;
+import bottle.util.EncryptUtil;
+import bottle.util.FileTool;
 import com.google.gson.Gson;
 import bottle.backup.imps.Protocol;
 import java.io.File;
@@ -152,9 +152,9 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
         closeResource();//关闭资源
         String fs_path = ftcBackupServer.getDirectory()+map.get("path")+map.get("filename") + SUFFER; //获取备份后缀的文件
         long length = Long.valueOf(map.remove("length")); //获取文件大小
-        if (FileUtils.checkFile(fs_path)){
+        if (FileTool.checkFile(fs_path)){
             //存在一个备份文件
-            if (!FileUtils.deleteFile(fs_path)){
+            if (!FileTool.deleteFile(fs_path)){
 //                (flag+ " 存在文件: "+fs_path);
                 //无法删除
                 map.put("protocol",Protocol.S_FILE_BACKUP_TRS_OVER);
@@ -240,8 +240,8 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
         }
 
         closeResource();
-        if (FileUtils.rename(new File(fs_path+ SUFFER), new File(fs_path))){
-            FileUtils.deleteFile(fs_path+ SUFFER);
+        if (FileTool.rename(new File(fs_path+ SUFFER), new File(fs_path))){
+            FileTool.deleteFile(fs_path+ SUFFER);
         }
 
         map.put("protocol",Protocol.S_FILE_BACKUP_TRS_OVER);
@@ -289,7 +289,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
                 //判断本地是否存在文件
                 if (file.exists()){
                     try {
-                        md5 = EncryptUtils.getFileMd5ByString(file);
+                        md5 = EncryptUtil.getFileMd5ByString(file);
                         if (md5.equals(temp[1])){
                            continue;
                         }

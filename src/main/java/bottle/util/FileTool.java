@@ -17,9 +17,9 @@ import java.util.Map;
  * Created by lzp on 2017/5/9.
  *
  */
-public class FileUtils {
+public class FileTool {
     public static final String PROGRESS_HOME_PATH = ".";
-    public static final String SEPARATOR = "/";//File.separator;
+    public static final String SEPARATOR = "/"; //File.separator;
     private static byte[] ENDFD = "\n".getBytes();
 
     /**
@@ -27,12 +27,12 @@ public class FileUtils {
      */
     public static String replaceFileSeparatorAndCheck(String path,String prefix,String suffix){
         path = path.replace("\\",SEPARATOR);
-        if (!StringUtils.isEmpty(prefix)){
+        if (!StringUtil.isEmpty(prefix)){
             if (path.startsWith(prefix)){
                 path = path.substring(1);
             }
         }
-        if (!StringUtils.isEmpty(suffix)){
+        if (!StringUtil.isEmpty(suffix)){
             if (path.endsWith(suffix)){
                 path = path.substring(0,path.length()-1);
             }
@@ -72,7 +72,7 @@ public class FileUtils {
                     String[] files = file.list();
                     if (files!=null){
                         for (int i = 0; i < files.length; i++){
-                            deleteFileOrDir(path+FileUtils.SEPARATOR+files[i]);
+                            deleteFileOrDir(path+ FileTool.SEPARATOR+files[i]);
                         }
                     }
                     file.delete();
@@ -81,10 +81,6 @@ public class FileUtils {
                 }
             }
 
-    }
-
-    public static void main(String[] args) {
-        deleteFileOrDir("C:\\Users\\user\\Desktop\\顺丰 - 副本");
     }
 
     public static void closeStream(FileChannel in, FileChannel out){
@@ -383,7 +379,7 @@ public class FileUtils {
     }
 
     public static String readFileText(String path,String charset){
-        if (StringUtils.isEmpty(charset)) charset = "UTF-8";
+        if (StringUtil.isEmpty(charset)) charset = "UTF-8";
         try(FileInputStream fis = new FileInputStream(path)) {
             StringBuilder sb = new StringBuilder();
             byte[] bytes = new byte[1024];

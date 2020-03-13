@@ -17,7 +17,14 @@ import java.util.List;
  * email: 793065165@qq.com
  */
 
-public class GsonUtils {
+public class GoogleGsonUtil {
+
+    private final static Gson builder =  new GsonBuilder()
+            .setLongSerializationPolicy(LongSerializationPolicy.STRING)
+            .registerTypeAdapter(Double.class, (JsonSerializer<Double>) (src, typeOfSrc, context) -> new JsonPrimitive(src.longValue()+""))
+            .registerTypeAdapter(Integer.class,(JsonSerializer<Integer>) (src, typeOfSrc, context) -> new JsonPrimitive(src+""))
+            .create();
+
     /** 判断是否为JSON格式字符串 */
     public static boolean isJsonFormatter(String str) {
         try {
@@ -36,20 +43,22 @@ public class GsonUtils {
     public static <T> T jsonToJavaBean(String json,Type type) {
         try {
             if (json==null || json.length()==0) return null;
-            return new Gson().fromJson(json, type);//对于javabean直接给出class实例
+            return builder.fromJson(json, type);//对于javabean直接给出class实例
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
         }
         return null;
     }
+
     /**
      * javabean to json
      * @param object
      * @return
      */
     public static String javaBeanToJson(Object object){
-        return new Gson().toJson(object);
+        return builder.toJson(object);
     }
+
     /**
      * json to javabean
      *
@@ -58,8 +67,18 @@ public class GsonUtils {
     public static <T> T jsonToJavaBean(String json,Class<T> cls) {
         try {
             if (json==null || json.length()==0) return null;
-            return new Gson().fromJson(json, cls);//对于javabean直接给出class实例
+            return builder.fromJson(json, cls);//对于javabean直接给出class实例
         } catch (JsonSyntaxException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static <T,D> HashMap<T,D> string2Map(String json){
+        try {
+            if (json==null || json.length()==0) return null;
+            return jsonToJavaBean(json, new TypeToken<HashMap<T,D>>() {}.getType());
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -78,6 +97,7 @@ public class GsonUtils {
         }
         return list;
     }
+
     /**
      * 判断是否是数组类型的json字符串
      */

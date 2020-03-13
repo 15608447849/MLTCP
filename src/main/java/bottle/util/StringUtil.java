@@ -1,16 +1,17 @@
 package bottle.util;
 
 import java.io.UnsupportedEncodingException;
-import java.util.regex.Pattern;
 
-public class StringUtils {
+public class StringUtil {
+
     /**字符串为空*/
     public static boolean isEmpty(String str){
         return str == null || str.trim().length() == 0 ;
     }
+
     /**字符串不为空*/
     public static boolean isNotEmpty(String str) {
-        return !StringUtils.isEmpty(str);
+        return !StringUtil.isEmpty(str);
     }
 
     /**判断一组字符串有一个为空 true*/
@@ -20,6 +21,7 @@ public class StringUtils {
         }
         return false;
     }
+
     /** 去除空格 */
     public static String trim(String text) {
         if(text == null || "".equals(text)) {
@@ -53,7 +55,7 @@ public class StringUtils {
     }
 
     public static boolean isNotBlank(CharSequence cs) {
-        return !StringUtils.isBlank(cs);
+        return !StringUtil.isBlank(cs);
     }
 
     /**

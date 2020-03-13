@@ -24,10 +24,7 @@ public class MThread extends Thread {
     public boolean addRunning(Runnable run){
         if (!isRunning) return false;
         if (storeLimit == 1 && isWorking) return false;
-        if (runQueue.offer (run)){
-            return true;
-        }
-        return false;
+        return runQueue.offer(run);
     }
     /**
      * 获取元素的当前大小
@@ -43,7 +40,7 @@ public class MThread extends Thread {
         try {
             return runQueue.take();
         } catch (InterruptedException e) {
-//            e.printStackTrace();
+            e.printStackTrace();
         }
         return null;
     }

@@ -15,7 +15,7 @@ import java.util.Objects;
 /**
  * Created by user on 2017/6/5.
  */
-public class EncryptUtils {
+public class EncryptUtil {
 
     public static class RSA{
 
@@ -294,8 +294,6 @@ public class EncryptUtils {
     public static class RSA2 {
 
         private static final String SIGN_SHA256RSA_ALGORITHMS = "SHA256WithRSA";
-
-
 
         public static String sign(String content, String privateKey, String characterEncoding) {
 

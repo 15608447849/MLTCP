@@ -1,6 +1,6 @@
 package bottle.tcps.p;
 
-import bottle.util.StringUtils;
+import bottle.util.StringUtil;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -75,7 +75,7 @@ public class SessionOperation {
      *
      */
     public void writeString(String message,String charset){
-        charset = StringUtils.isEmpty(charset)?"utf-8":charset;
+        charset = StringUtil.isEmpty(charset)?"utf-8":charset;
 
         byte[] data;
         try {

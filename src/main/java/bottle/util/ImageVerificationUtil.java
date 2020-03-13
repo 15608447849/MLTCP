@@ -13,7 +13,7 @@ import java.util.Random;
  * @Author: leeping
  * @Date: 2019/3/13 11:36
  */
-public class ImageVerificationUtils {
+public class ImageVerificationUtil {
 
     public static String getRandomCodeByNum(int length) {
         StringBuilder sb = new StringBuilder();
@@ -25,6 +25,7 @@ public class ImageVerificationUtils {
         }
         return sb.toString();
     }
+
     /**
      * 生成随机验证码 String
      */
@@ -41,6 +42,7 @@ public class ImageVerificationUtils {
         }
         return sb.toString();
     }
+
     /**
      * 随机生成图形验证码
      */

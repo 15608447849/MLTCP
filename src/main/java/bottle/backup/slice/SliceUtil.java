@@ -1,6 +1,6 @@
 package bottle.backup.slice;
 
-import bottle.util.EncryptUtils;
+import bottle.util.EncryptUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,8 +53,8 @@ public class SliceUtil {
                 sliceInfo = new SliceInfo();
                 sliceInfo.position = position;
                 sliceInfo.length = len;
-                sliceInfo.adler32Hex = EncryptUtils.adler32Hex(buffer,0,len);
-                sliceInfo.md5Hex = EncryptUtils.getBytesMd5ByString(buffer,0,len);
+                sliceInfo.adler32Hex = EncryptUtil.adler32Hex(buffer,0,len);
+                sliceInfo.md5Hex = EncryptUtil.getBytesMd5ByString(buffer,0,len);
                 sliceList.add(sliceInfo);
                 position += sliceSize;
             }
@@ -115,13 +115,13 @@ public class SliceUtil {
 
                 randomAccessFile.read(buf,0,len);
 
-                adler32Hex = EncryptUtils.adler32Hex(buf,0,len);
+                adler32Hex = EncryptUtil.adler32Hex(buf,0,len);
 
                 iterator = table.entrySet().iterator();
                 while (iterator.hasNext()){
                     entry = iterator.next();
                     if (entry.getKey().equalsIgnoreCase(adler32Hex)){
-                        md5 = EncryptUtils.getBytesMd5ByString(buf,0,len);
+                        md5 = EncryptUtil.getBytesMd5ByString(buf,0,len);
                         list = entry.getValue();
                         if (list.size()>0){
                             it = list.iterator();

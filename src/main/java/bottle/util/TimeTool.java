@@ -8,7 +8,7 @@ import java.util.Date;
 /**
  * Created by user on 2017/11/27.
  */
-public class TimeUtils {
+public class TimeTool {
 
     /**
      * 一天得间隔时间
@@ -22,6 +22,7 @@ public class TimeUtils {
         startDT.add(Calendar.DAY_OF_MONTH, num);
         return startDT.getTime();
     }
+
     /**string -> date ,  参数:"11:00:00"  如果小于当前时间,向后加一天*/
     public static Date str_Hms_2Date(String timeString) {
         try {
@@ -104,6 +105,7 @@ public class TimeUtils {
         }
         return sb.toString();
     }
+
     /**
      * 获取当前年份
      */
