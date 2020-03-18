@@ -4,8 +4,6 @@ import javax.net.ssl.*;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.*;
 
 
@@ -13,7 +11,7 @@ import java.util.*;
  * Created by Leeping on 2018/7/29.
  * email: 793065165@qq.com
  *
-*/
+ */
 public class HttpUtil {
 
     /**
@@ -111,8 +109,6 @@ public class HttpUtil {
 
         public static final String POST = "POST";
 
-        public static final String HEAD = "HEAD";
-
         // true 上传文件
         private boolean isUpdate = false;
         // true 下载文件
@@ -163,11 +159,6 @@ public class HttpUtil {
         }
 
         public Request(String url, String type, Callback callback) {
-//            try {
-//                this.url = URLEncoder.encode(url,"UTF-8");
-//            } catch (UnsupportedEncodingException e) {
-//                throw new RuntimeException(e);
-//            }
             this.url = url;
             this.type = type;
             this.callback = callback;
@@ -383,8 +374,8 @@ public class HttpUtil {
         } catch (Exception e) {
             if (callback!=null) callback.onError(e);
         } finally {
-          closeIo(out,in);
-          if (con!=null) con.disconnect();//断开连接
+            closeIo(out,in);
+            if (con!=null) con.disconnect();//断开连接
         }
     }
 
@@ -447,26 +438,26 @@ public class HttpUtil {
         if (!request.isForm || request.formList == null || request.formList.size() == 0) return ;
 
         for(FormItem item : request.formList){
-                //表单数据
-                if (!item.isFile) {
-                    //文本类型
-                    writeBytesByForm(out, HttpFrom.PREV); //前缀
-                    writeBytesByForm(out, HttpFrom.textExplain(item.key,item.value)); //表单说明信息
-                }else{
-                    //文件类型
-                    if (!item.isStream && !item.fileItem.exists()){
-                        throw new FileNotFoundException(item.fileItem.getAbsolutePath());
-                    }
-                    writeBytesByForm(out, HttpFrom.PREV); //前缀
-                    writeBytesByForm(out, HttpFrom.fileExplain(item.field,item.file)); //表单说明信息
-                    writeBytesByForm(out, HttpFrom.SUX); //后缀
-
-                    if (item.isStream){
-                        writeInputStreamToOut(out,item.inputStream,request,callback);//接入流
-                    }else{
-                        writeFileStreamToOut(out,item.fileItem,request,callback);//接入文件流
-                    }
+            //表单数据
+            if (!item.isFile) {
+                //文本类型
+                writeBytesByForm(out, HttpFrom.PREV); //前缀
+                writeBytesByForm(out, HttpFrom.textExplain(item.key,item.value)); //表单说明信息
+            }else{
+                //文件类型
+                if (!item.isStream && !item.fileItem.exists()){
+                    throw new FileNotFoundException(item.fileItem.getAbsolutePath());
                 }
+                writeBytesByForm(out, HttpFrom.PREV); //前缀
+                writeBytesByForm(out, HttpFrom.fileExplain(item.field,item.file)); //表单说明信息
+                writeBytesByForm(out, HttpFrom.SUX); //后缀
+
+                if (item.isStream){
+                    writeInputStreamToOut(out,item.inputStream,request,callback);//接入流
+                }else{
+                    writeFileStreamToOut(out,item.fileItem,request,callback);//接入文件流
+                }
+            }
         }
 
         //添加表单后缀
@@ -482,25 +473,25 @@ public class HttpUtil {
 
     /** 写入文件流到服务器*/
     private static void writeFileStreamToOut(OutputStream out, File fileItem,Request request,Callback callback){
-            //文件流
-            FileInputStream fis = null;
-            try {
-                fis = new FileInputStream(fileItem); //文件流
-                //缓存数据字节
-                byte[] cache = new byte[request.getLocCacheByteMax()];
-                long total = fileItem.length();//文件大小
-                long progress = 0;//当前进度
-                int len = 0;//传输数据量
-                while ((len = fis.read(cache)) != -1) {
-                    out.write(cache, 0, len);
-                    progress +=len;
-                    if (callback!=null) callback.onProgress(fileItem,progress,total);
-                }
-            } catch (IOException e) {
-                if (callback!=null) callback.onError(e);
-            }finally {
-                closeIo(fis);
+        //文件流
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(fileItem); //文件流
+            //缓存数据字节
+            byte[] cache = new byte[request.getLocCacheByteMax()];
+            long total = fileItem.length();//文件大小
+            long progress = 0;//当前进度
+            int len = 0;//传输数据量
+            while ((len = fis.read(cache)) != -1) {
+                out.write(cache, 0, len);
+                progress +=len;
+                if (callback!=null) callback.onProgress(fileItem,progress,total);
             }
+        } catch (IOException e) {
+            if (callback!=null) callback.onError(e);
+        }finally {
+            closeIo(fis);
+        }
     }
 
     /** 写流上传 */
@@ -528,9 +519,7 @@ public class HttpUtil {
         try {
             URL url = new URL(request.url);
             con = request.url.startsWith("https") ?
-                    (HttpsURLConnection) url.openConnection() :
-                    (HttpURLConnection) url.openConnection();
-
+                    (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();;
             connectionSetting(con,request);
             connectionAddHeadParams(con,request);
             con.connect();//连接
@@ -553,8 +542,8 @@ public class HttpUtil {
             }else{
                 if (callback!=null) callback.onResult(
                         new Response(
-                        false,null,
-                        "response code = "+code+", response message = "+ message)
+                                false,null,
+                                "response code = "+code+", response message = "+ message)
                 );
             }
         }catch (Exception e){
@@ -613,7 +602,7 @@ public class HttpUtil {
 
         con.setRequestProperty("Charset", "UTF-8");
         con.setRequestProperty("Connection", "keep-alive");  //设置连接的状态
-
+        con.setRequestProperty("Connection", "keep-alive");  //设置连接的状态
 
         if (request.isUpdate){
             con.setDoOutput(true);

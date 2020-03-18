@@ -1,70 +1,85 @@
 package bottle.threadpool;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 
-public class IOThreadPool  extends Thread implements IThreadPool {
-
-    private ConcurrentLinkedQueue<Runnable> queue = new ConcurrentLinkedQueue<>();
-    private ThreadPoolExecutor executor = this.createIoExecutor(1000);
+public class IOThreadPool extends Thread implements IThreadPool {
+    private static final String TAG = "IO-THREAD-POOL-";
+    private final ConcurrentLinkedQueue<Runnable> queue = new ConcurrentLinkedQueue<>();
+    private final ThreadPoolExecutor executor;
     private boolean isLoop = true;
 
-    public IOThreadPool() {
-        this.setName("IO线程池保留线程-" + this.getId());
-        this.start();
+    public IOThreadPool(int capacity) {
+        executor = createIoExecutor(capacity);
+        setDaemon(true);
+        setName(TAG+"QUEUE-"+getId());
+        start();
     }
 
+    public IOThreadPool() {
+        this(1000);
+    }
+
+    //核心线程数,最大线程数,非核心线程空闲时间,存活时间单位,线程池中的任务队列
     private ThreadPoolExecutor createIoExecutor(int capacity) {
-        return new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(),
-                capacity / 2,
+
+         return new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(),
+                 capacity/2,
                 30L,
                 TimeUnit.SECONDS,
-                new ArrayBlockingQueue<>(capacity), (r) -> {
-            Thread thread = new Thread(r);
-            thread.setName("t-pio#-" + thread.getId());
-            return thread;
-        }, (r, executor) -> {
-            this.queue.offer(r);
-            synchronized(this.queue) {
-                this.queue.notify();
-            }
-        });
+                new ArrayBlockingQueue<>(capacity),
+                 r -> {
+                     Thread thread = new Thread(r);
+                     thread.setName(TAG+"NEW-"+thread.getId());
+                     return thread;
+                 },
+                 (r, executor) -> {
+                     //超过IO线程池处理能力的任务,进入单线程执行队列
+                     queue.offer(r);
+                     synchronized (queue){
+                         queue.notifyAll();
+                     }
+                 }
+         );
     }
 
+    @Override
     public void run() {
-        while(this.isLoop) {
-            try {
-                Runnable runnable = this.queue.poll();
-                if (runnable == null) {
-                    synchronized(this.queue) {
+        while (isLoop){
+            try{
+                //如果存在任务 , 一直执行 ,直到队列空, 进入等待执行
+                Runnable runnable = queue.poll();
+                if (runnable == null){
+                    synchronized (queue){
                         try {
-                            this.queue.wait();
-                        } catch (InterruptedException var5) {
-                            var5.printStackTrace();
+                            queue.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
                     }
-                } else {
-                    runnable.run();
+                    continue;
                 }
-
-            } catch (Exception var7) {
-                var7.printStackTrace();
+                runnable.run();
+            }catch (Exception e){
+                e.printStackTrace();
             }
         }
-
     }
 
-    public void post(Runnable runnable) {
-        this.executor.execute(runnable);
+    @Override
+    public void post(Runnable runnable){
+        executor.execute(runnable);
     }
-
-    public void close() {
-        this.isLoop = false;
-        synchronized(this.queue) {
-            this.queue.notify();
+    @Override
+    public void close(){
+        queue.clear();
+        isLoop = false;
+        synchronized (queue){
+            queue.notify();
         }
-        if (this.executor != null) {
-            this.executor.shutdownNow();
-        }
+        if (executor!=null) executor.shutdownNow();
     }
 }

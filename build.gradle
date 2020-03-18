@@ -1,6 +1,7 @@
 // ttps://central.sonatype.org/pages/gradle.html
 plugins {
     id 'java'
+    id "com.github.johnrengelman.shadow" version "4.0.2"
 }
 
 group 'bottle'
@@ -11,6 +12,7 @@ sourceCompatibility = 1.8
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
 }
+
 tasks.withType(Javadoc) {
     options.addStringOption('Xdoclint:none', '-quiet')
     options.addStringOption('encoding', 'UTF-8')
@@ -18,6 +20,7 @@ tasks.withType(Javadoc) {
 
 repositories {
     maven { url "http://maven.aliyun.com/nexus/content/groups/public/"}
+    maven { url "https://plugins.gradle.org/m2/" }
     mavenCentral()
 }
 
@@ -25,7 +28,6 @@ dependencies {
     compile 'com.google.code.gson:gson:2.8.5'
     compile 'org.apache.logging.log4j:log4j-api:2.11.2'
     compile 'org.apache.logging.log4j:log4j-core:2.11.2'
-//    compile 'org.apache.directory.studio:org.apache.commons.codec:1.8'
 }
 
 apply plugin: 'maven'
@@ -46,6 +48,18 @@ task sourcesJar(type: Jar) {
 //jar产出的配置
 artifacts {
     archives javadocJar, sourcesJar
+}
+
+shadowJar {
+    baseName = 'MLTCP'
+    classifier = null
+    version = 1.0
+    manifest {
+//        attributes 'Main-Class': 'com.erp.launch.ERPApplication'
+    }
+//    dependencies {    }
+//    exclude 'cef'
+
 }
 
 signing {

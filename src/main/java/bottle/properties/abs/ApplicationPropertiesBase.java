@@ -41,7 +41,7 @@ public final class ApplicationPropertiesBase {
     }
 
     //读取配置文件
-    private static InputStream readPathProperties(Class clazz,String filePath) throws FileNotFoundException {
+    public static InputStream readPathProperties(Class clazz,String filePath) throws FileNotFoundException {
         //优先从外部配置文件获取
         String dirPath = getRuntimeRootPath(clazz);
         if (dirPath != null){
