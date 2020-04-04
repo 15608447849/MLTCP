@@ -25,32 +25,9 @@ import java.util.Map;
 
 public class GoogleGsonUtil {
 
-    private static class TEST{
-        long longValue;
-        int intValue;
-        String stringValue;
-        double doubleValue;
-        float floatValue;
-
-        public TEST(long longValue, int intValue, String stringValue, double doubleValue, float floatValue) {
-            this.longValue = longValue;
-            this.intValue = intValue;
-            this.stringValue = stringValue;
-            this.doubleValue = doubleValue;
-            this.floatValue = floatValue;
-        }
+    private static void printJsonError(String jsonText,Throwable e){
+        Log4j.error("GSON-解析异常,内容:\t"+jsonText,e);
     }
-
-    public static void main(String[] args) {
-        TEST t = new TEST(1577932202698001040L,200,"hahaha",15.6001d,22.77f);
-        String json = GoogleGsonUtil.javaBeanToJson(t);
-        System.out.println(json);
-        Map<String, Object> map = GoogleGsonUtil.string2Map(json);
-        System.out.println(map);
-
-    }
-
-
 
     private final static Gson builderLong2String =  new GsonBuilder()
             .setLongSerializationPolicy(LongSerializationPolicy.STRING).create();
@@ -59,10 +36,11 @@ public class GoogleGsonUtil {
 //            .registerTypeAdapter(Integer.class,(JsonSerializer<Integer>) (src, typeOfSrc, context) -> new JsonPrimitive(src+""))
 
     /** 判断是否为JSON格式字符串 */
-    public static boolean isJsonFormatter(String str) {
+    public static boolean isJsonFormatter(String json) {
         try {
-            new JsonParser().parse(str);
+            new JsonParser().parse(json);
         } catch (Exception e) {
+            printJsonError(json,e);
             return false;
         }
         return true;
@@ -77,8 +55,8 @@ public class GoogleGsonUtil {
         try {
             if (json==null || json.length()==0) return null;
             return builderLong2String.fromJson(json, type);//对于javabean直接给出class实例
-        } catch (JsonSyntaxException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            printJsonError(json,e);
         }
         return null;
     }
@@ -89,7 +67,14 @@ public class GoogleGsonUtil {
      * @return
      */
     public static String javaBeanToJson(Object object){
-        return builderLong2String.toJson(object);
+        try {
+            if (object!=null){
+                return builderLong2String.toJson(object);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
@@ -101,69 +86,10 @@ public class GoogleGsonUtil {
         try {
             if (json==null || json.length()==0) return null;
             return builderLong2String.fromJson(json, cls);//对于javabean直接给出class实例
-        } catch (JsonSyntaxException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            printJsonError(json,e);
         }
         return null;
-    }
-
-
-
-    private static class MapTypeAdapter extends TypeAdapter<Object> {
-
-        @Override
-        public void write(JsonWriter out, Object value) throws IOException {
-
-        }
-
-        @Override
-        public Object read(JsonReader in) throws IOException {
-            JsonToken token = in.peek();
-
-            switch (token) {
-                case BEGIN_ARRAY:
-                    List<Object> list = new ArrayList<>();
-                    in.beginArray();
-                    while (in.hasNext()) {
-                        list.add(read(in));
-                    }
-                    in.endArray();
-                    return list;
-
-                case BEGIN_OBJECT:
-                    Map<String, Object> map = new HashMap<>();
-                    in.beginObject();
-                    while (in.hasNext()) {
-                        map.put(in.nextName(), read(in));
-                    }
-                    in.endObject();
-                    return map;
-
-                case STRING:
-                    return in.nextString();
-
-                case NUMBER:
-                    String s = in.nextString();
-                    if (s.contains(".")) {
-                        return Double.valueOf(s);
-                    } else {
-                        try {
-                            return Integer.valueOf(s);
-                        } catch (Exception e) {
-                            return Long.valueOf(s);
-                        }
-                    }
-                case BOOLEAN:
-                    return in.nextBoolean();
-
-                case NULL:
-                    in.nextNull();
-                    return null;
-
-                default:
-                    throw new IllegalStateException();
-            }
-        }
     }
 
     public static <T,D> HashMap<T,D> string2Map(String json){
@@ -171,8 +97,6 @@ public class GoogleGsonUtil {
             if (json==null || json.length()==0) return null;
 
             Type type = new TypeToken<HashMap<T,D>>() {}.getType();
-
-
             Gson _builder =  new GsonBuilder()
                     .registerTypeAdapter(type,
                             new TypeAdapter<Object>(){
@@ -226,14 +150,12 @@ public class GoogleGsonUtil {
                                 default:
                                     throw new IllegalStateException();
                             }
-
-
                         }
                     } ).create();
 
               return _builder.fromJson(json, type);//对于javabean直接给出class实例
         } catch (Exception e) {
-            e.printStackTrace();
+            printJsonError(json,e);
         }
         return null;
     }
@@ -242,12 +164,14 @@ public class GoogleGsonUtil {
         List<T> list = new ArrayList<>();
         try {
             Gson gson = new Gson();
-            JsonArray array = new JsonParser().parse(json).getAsJsonArray();
+            JsonParser reader = new JsonParser();
+            JsonElement jsonElement = reader.parse(json);
+            JsonArray array = jsonElement.getAsJsonArray();
             for (JsonElement element : array) {
                 list.add(gson.fromJson(element, clazz));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception e){
+            printJsonError(json,e);
         }
         return list;
     }
@@ -261,7 +185,9 @@ public class GoogleGsonUtil {
             if (jsonObj instanceof JSONArray) {
                 return true;
             }
-        } catch (JSONException ignored) { }
+        } catch (Exception e) {
+            printJsonError(json,e);
+        }
         return false;
     }
 
@@ -271,8 +197,15 @@ public class GoogleGsonUtil {
 
     /** 格式化字符串 */
     public static String toPrettyFormat(Object object) {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        return gson.toJson(object);
+        try {
+            if (object!=null){
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                return gson.toJson(object);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }
